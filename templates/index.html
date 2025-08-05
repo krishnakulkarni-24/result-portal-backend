@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Result Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #ff0000ff, #5100ffff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh; overflow: hidden;
+    }
+    .card {
+      background-color: #fff;
+      padding: 35px 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      width: 90%;
+      max-width: 420px;
+      animation: fadeInCard 1s ease;
+    }
+    .logo img {
+      width: 180px;
+      margin-bottom: 25px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border 0.3s;
+    }
+    input:focus, select:focus {
+      border-color: #1a73e8; outline: none;
+    }
+    button {
+      width: 100%;
+      background: linear-gradient(to right, #1a73e8, #00c6ff);
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1a73e8;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes fadeInCard {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <img src="static\anurag-university-logo-png_seeklogo-460452.png" alt="Logo">
+    </div>
+    <h2>Check Your Result</h2>
+    <form id="resultForm">
+      <input type="text" id="rollNumber" placeholder="Enter Roll Number" required>
+      <select id="branch" required>
+        <option value="">Select Branch</option>
+        <option value="ai">Artificial Intelligence</option>
+        <option value="cse">Computer Science</option>
+        <option value="ece">Electronics</option>
+      </select>
+      <select id="semester" required>
+        <option value="">Select Semester</option>
+        <option value="1">Semester 1</option>
+        <option value="2">Semester 2</option>
+        <option value="3">Semester 3</option>
+      </select>
+      <button type="submit">Get Result</button>
+    </form>
+    <div id="result"></div>
+  </div>
+  <script>
+    const form = document.getElementById("resultForm");
+    const resultDiv = document.getElementById("result");
+    const synth = window.speechSynthesis;
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      resultDiv.innerHTML = '<div class="spinner"></div>';
+
+      const rollNumber = document.getElementById("rollNumber").value;
+      const branch = document.getElementById("branch").value;
+      const semester = document.getElementById("semester").value;
+
+      const res = await fetch("/get_result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rollNumber, branch, semester })
+      });
+
+      const data = await res.json();
+
+      if (data.status === "redirect") {
+        window.location.href = data.url;
+      } else {
+        resultDiv.innerHTML = "<p style='color:red;font-weight:bold;'>❌ Result not found</p>";
+        synth.cancel();
+        const msg = new SpeechSynthesisUtterance("Result not found. Please check your inputs.");
+        synth.speak(msg);
+      }
+    });
+  </script>
+</body>
+</html>
